@@ -6,7 +6,7 @@ from textual.widgets import Input, ListItem, ListView, Static
 
 from ghascii.github import GitHubClient
 from ghascii.screens.file_tree import FileTreeScreen
-from ghascii.ui import breadcrumb, keybar
+from ghascii.ui import keybar
 
 
 class RepoListScreen(Screen):
@@ -24,13 +24,17 @@ class RepoListScreen(Screen):
     def __init__(self, github: GitHubClient) -> None:
         super().__init__()
         self.github = github
+        self.username = ""
         self.repos: list[dict] = []
         self.filtered_repos: list[dict] = []
         self._repo_labels: list[Static] = []
         self._repo_texts: list[str] = []
 
+    def _header_text(self) -> Text:
+        return Text(f"{self.username} >", style="bold white")
+
     def compose(self) -> None:
-        yield Static(breadcrumb("repositories"), classes="bar-top")
+        yield Static(self._header_text(), id="repo-header", classes="bar-top")
         filter_input = Input(
             placeholder="type to filter...",
             id="repo-filter",
@@ -73,6 +77,9 @@ class RepoListScreen(Screen):
         list_view.border_subtitle = "loading..."
         list_view.append(ListItem(Static("Loading...", markup=False)))
         try:
+            user = await self.github.verify_token()
+            self.username = user.get("login", "")
+            self.query_one("#repo-header", Static).update(self._header_text())
             self.repos = await self.github.list_repositories()
             self._apply_filter()
             self.query_one("#repo-list", ListView).focus()
