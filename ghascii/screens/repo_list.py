@@ -1,11 +1,14 @@
 """Repository list screen."""
 
+from pathlib import Path
+
 from rich.text import Text
 from textual.screen import Screen
 from textual.widgets import Input, ListItem, ListView, Static
 
 from ghascii.github import GitHubClient
 from ghascii.screens.file_tree import FileTreeScreen
+from ghascii.screens.update import UpdateScreen
 from ghascii.ui import keybar
 
 
@@ -19,6 +22,7 @@ class RepoListScreen(Screen):
         ("k", "cursor_up", "Up"),
         ("/", "focus_filter", "Filter"),
         ("escape", "focus_list", "List"),
+        ("u", "update", "Update"),
     ]
 
     def __init__(self, github: GitHubClient) -> None:
@@ -53,6 +57,7 @@ class RepoListScreen(Screen):
                 ("enter", "open"),
                 ("/", "filter"),
                 ("r", "refresh"),
+                ("u", "update"),
                 ("?", "help"),
                 ("q", "quit"),
             ),
@@ -140,6 +145,10 @@ class RepoListScreen(Screen):
 
     def action_refresh(self) -> None:
         self.run_worker(self._load_repos(), exclusive=True)
+
+    def action_update(self) -> None:
+        root = Path(__file__).resolve().parents[2]
+        self.app.push_screen(UpdateScreen(root))
 
     def action_cursor_down(self) -> None:
         self.query_one("#repo-list", ListView).action_cursor_down()
