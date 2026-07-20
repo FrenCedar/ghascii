@@ -20,7 +20,7 @@ class CloneProgressScreen(Screen):
     ]
 
     def __init__(self, owner: str, repo: str, clone_url: str) -> None:
-        super().__init__()
+        super().__init__(id="clone-screen")
         self.owner = owner
         self.repo = repo
         self.clone_url = clone_url
@@ -52,3 +52,6 @@ class CloneProgressScreen(Screen):
             log.write(f"Repository is at: {dest / self.owner / self.repo}")
         except GitError as e:
             log.write(f"Git error: {e}")
+
+    def action_pop_screen(self) -> None:
+        self.app.pop_screen()

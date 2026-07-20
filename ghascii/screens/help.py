@@ -10,6 +10,9 @@ class HelpScreen(Screen):
 
     BINDINGS = [("q", "pop_screen", "Close")]
 
+    def __init__(self) -> None:
+        super().__init__(id="help-screen")
+
     def compose(self) -> None:
         text = (
             "ghascii controls\n\n"
@@ -27,3 +30,6 @@ class HelpScreen(Screen):
             Static("Press q to close", id="help-footer"),
             id="help-box",
         )
+
+    def action_pop_screen(self) -> None:
+        self.app.pop_screen()

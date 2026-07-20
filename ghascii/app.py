@@ -13,35 +13,139 @@ class GhasciiApp(App):
     """ASCII-only GitHub TUI for headless Linux consoles."""
 
     CSS = """
-    #login-screen { align: center middle; }
-    #login-box { width: 70; height: auto; padding: 1 2; }
-    #login-title { text-align: center; text-style: bold; }
+    Screen {
+        background: #0f172a;
+        color: #e2e8f0;
+    }
+
+    #login-screen, #clone-screen, #help-screen, #error-screen {
+        align: center middle;
+    }
+
+    #login-box {
+        width: 70;
+        height: auto;
+        padding: 2 3;
+        background: #1e293b;
+    }
+    #login-title {
+        text-align: center;
+        text-style: bold;
+        color: cyan;
+        padding-bottom: 1;
+    }
+    #login-status {
+        text-align: center;
+        color: #94a3b8;
+        padding-bottom: 1;
+    }
+    #login-button {
+        text-align: center;
+        text-style: bold;
+        color: black;
+        background: cyan;
+        padding: 1 2;
+    }
+
     #repo-title, #tree-title, #code-title {
         dock: top;
-        padding: 1 2;
-        text-style: bold;
-    }
-    #repo-footer, #tree-footer, #code-footer {
-        dock: bottom;
+        height: auto;
         padding: 0 2;
-        color: white;
+        text-style: bold;
+        background: cyan;
+        color: black;
     }
-    #repo-list, #file-tree { width: 100%; height: 1fr; }
-    #code-view { width: 100%; height: 1fr; scrollbar-size: 0 0; }
-    #clone-box { width: 70; height: auto; padding: 1 2; }
-    #clone-title { text-style: bold; }
-    #clone-log { height: auto; max-height: 20; }
-    #error-box, #help-box { width: 60; height: auto; padding: 1 2; }
-    #error-title, #help-title { text-align: center; text-style: bold; }
-    #error-message { padding: 1 0; }
-    #help-text { padding: 1 0; }
+
+    #repo-footer, #tree-footer, #code-footer, #clone-footer {
+        dock: bottom;
+        height: auto;
+        padding: 0 2;
+        background: #1e293b;
+        color: #e2e8f0;
+    }
+
     Input {
         height: auto;
         margin: 0 2;
+        padding: 0 1;
+        background: #1e293b;
+        color: #e2e8f0;
     }
-    Input:focus { background: green; }
-    ListView > ListItem { padding: 0 1; }
-    ListView > ListItem.--highlight { background: blue; }
+    Input:focus {
+        background: #334155;
+    }
+
+    #repo-list, #file-tree {
+        width: 100%;
+        height: 1fr;
+        padding: 0 1;
+        background: #0f172a;
+    }
+
+    ListView > ListItem {
+        padding: 0 1;
+        background: #0f172a;
+        color: #e2e8f0;
+    }
+    ListView > ListItem.--highlight {
+        background: cyan;
+        color: black;
+        text-style: bold;
+    }
+
+    #file-tree {
+        background: #0f172a;
+        color: #e2e8f0;
+    }
+
+    #code-view {
+        width: 100%;
+        height: 1fr;
+        scrollbar-size: 0 0;
+        background: #0f172a;
+    }
+
+    #clone-box {
+        width: 70;
+        height: auto;
+        padding: 2 3;
+        background: #1e293b;
+    }
+    #clone-title {
+        text-style: bold;
+        color: cyan;
+        padding-bottom: 1;
+    }
+    #clone-log {
+        height: auto;
+        max-height: 20;
+        background: #0f172a;
+    }
+
+    #error-box, #help-box {
+        width: 60;
+        height: auto;
+        padding: 2 3;
+        background: #1e293b;
+    }
+    #error-title, #help-title {
+        text-align: center;
+        text-style: bold;
+        color: cyan;
+        padding-bottom: 1;
+    }
+    #error-message {
+        padding: 1 0;
+        color: red;
+    }
+    #help-text {
+        padding: 1 0;
+        color: #e2e8f0;
+    }
+    #error-dismiss, #help-footer {
+        text-align: center;
+        color: #94a3b8;
+    }
     """
 
     BINDINGS = [

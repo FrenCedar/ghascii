@@ -14,7 +14,7 @@ class ErrorScreen(Screen):
     ]
 
     def __init__(self, message: str) -> None:
-        super().__init__()
+        super().__init__(id="error-screen")
         self.message = message
 
     def compose(self) -> None:
@@ -24,3 +24,6 @@ class ErrorScreen(Screen):
             Center(Static("[ Press Enter or Escape ]", id="error-dismiss")),
             id="error-box",
         )
+
+    def action_pop_screen(self) -> None:
+        self.app.pop_screen()
