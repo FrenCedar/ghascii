@@ -33,7 +33,7 @@ class LoginScreen(Screen):
             id="login-box",
             classes="modal-box",
         )
-        box.border_title = "ghascii"
+        box.border_title = " "
         box.border_subtitle = "enter: login | q: quit"
         yield box
 
