@@ -8,7 +8,11 @@ from textual.widgets import Static
 class HelpScreen(Screen):
     """Displays keyboard controls for ghascii."""
 
-    BINDINGS = [("q", "pop_screen", "Close")]
+    BINDINGS = [
+        ("q", "pop_screen", "Close"),
+        ("backspace", "pop_screen", "Close"),
+        ("escape", "pop_screen", "Close"),
+    ]
 
     def __init__(self) -> None:
         super().__init__(id="help-screen")
@@ -20,7 +24,7 @@ class HelpScreen(Screen):
             "tab             switch files/versions panel\n"
             "backspace or h  go back\n"
             "/               filter the current list\n"
-            "esc             close filter / return to list\n"
+            "esc             menu\n"
             "r               refresh\n"
             "c               clone current repo\n"
             "v               revision history (file view)\n"
