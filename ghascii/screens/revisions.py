@@ -103,7 +103,7 @@ class RevisionsScreen(Screen):
             return
         for commit in self.filtered_commits:
             text = self._commit_text(commit)
-            label = Static(text, markup=False)
+            label = Static(f"  {text}", markup=False)
             self._commit_labels.append(label)
             self._commit_texts.append(text)
             list_view.append(ListItem(label))
@@ -119,7 +119,7 @@ class RevisionsScreen(Screen):
             if index == i:
                 label.update(f"> {original}")
             else:
-                label.update(original)
+                label.update(f"  {original}")
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
         self._sync_selection()

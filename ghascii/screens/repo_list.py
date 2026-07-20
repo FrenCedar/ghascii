@@ -84,7 +84,7 @@ class RepoListScreen(Screen):
             return
         for repo in self.filtered_repos:
             text = self._repo_text(repo)
-            label = Static(text, markup=False)
+            label = Static(f"  {text}", markup=False)
             self._repo_labels.append(label)
             self._repo_texts.append(text)
             list_view.append(ListItem(label))
@@ -100,7 +100,7 @@ class RepoListScreen(Screen):
             if index == i:
                 label.update(f"> {original}")
             else:
-                label.update(original)
+                label.update(f"  {original}")
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
         self._sync_selection()

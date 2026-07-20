@@ -36,10 +36,12 @@ class AsciiTree(Tree):
             )
         else:
             prefix = ("", base_style)
-        if node == self.cursor_node:
-            text = Text.assemble(prefix, ("> ", style), node_label)
-        else:
-            text = Text.assemble(prefix, node_label)
+        indicator = (
+            ("> ", style)
+            if node == self.cursor_node
+            else ("  ", base_style)
+        )
+        text = Text.assemble(prefix, indicator, node_label)
         return text
 
 
