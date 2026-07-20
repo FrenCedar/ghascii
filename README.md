@@ -51,14 +51,20 @@ ghascii
 
 ## Controls
 
-- `↑/↓` or `j/k` - move selection
+- `↑/↓` or `j/k` - move selection / scroll
 - `Enter` - open selected item
 - `Backspace` or `h` - go back
-- `/` - filter/search the current list
+- `/` - open the filter panel for the current list
+- `Esc` - return to the list (hides the filter panel when empty)
 - `r` - refresh
 - `c` - clone current repository locally (file-tree screen)
+- `v` - revision history (file view)
 - `?` - help
 - `q` - quit
+
+Each screen is segmented into a breadcrumb header, a framed content panel
+(with live item counts in the border), an on-demand filter panel, and a
+keybind bar. The focused panel's frame is highlighted in cyan.
 
 ## Updating on Arch
 

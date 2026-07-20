@@ -1,11 +1,12 @@
 """Revision history screen for a repository or file."""
 
-from textual.containers import Vertical
+from rich.text import Text
 from textual.screen import Screen
 from textual.widgets import Input, ListItem, ListView, Static
 
 from ghascii.github import GitHubClient
 from ghascii.screens.code_view import CodeViewScreen
+from ghascii.ui import breadcrumb, keybar
 
 
 class RevisionsScreen(Screen):
@@ -14,6 +15,7 @@ class RevisionsScreen(Screen):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("backspace", "pop_screen", "Back"),
+        ("h", "pop_screen", "Back"),
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
         ("/", "focus_filter", "Filter"),
@@ -38,21 +40,32 @@ class RevisionsScreen(Screen):
         self._commit_texts: list[str] = []
 
     def compose(self) -> None:
-        label = f"{self.owner}/{self.repo}"
+        parts = ["repositories", f"{self.owner}/{self.repo}"]
         if self.path:
-            label = f"{label}: {self.path}"
-        yield Static(
-            f"[cyan]ghascii[/cyan]  |  Revisions - {label}", id="revisions-title"
-        )
-        yield Input(
-            placeholder="Filter commits... (Esc to return)",
+            parts.append(self.path)
+        parts.append("revisions")
+        yield Static(breadcrumb(*parts), classes="bar-top")
+        filter_input = Input(
+            placeholder="type to filter...",
             id="revisions-filter",
+            classes="panel hidden",
             disabled=True,
         )
-        yield ListView(id="revisions-list")
+        filter_input.border_title = "Filter"
+        filter_input.border_subtitle = "esc: close"
+        yield filter_input
+        list_view = ListView(id="revisions-list", classes="panel")
+        list_view.border_title = "Revisions"
+        yield list_view
         yield Static(
-            "q: quit | backspace: back | /: filter | j/k: move | enter: view",
-            id="revisions-footer",
+            keybar(
+                ("j/k", "move"),
+                ("enter", "view"),
+                ("/", "filter"),
+                ("h", "back"),
+                ("q", "quit"),
+            ),
+            classes="bar-bottom",
         )
 
     def on_mount(self) -> None:
@@ -70,6 +83,7 @@ class RevisionsScreen(Screen):
         filter_input = self.query_one("#revisions-filter", Input)
         filter_input.disabled = True
         list_view.clear()
+        list_view.border_subtitle = "loading..."
         list_view.append(ListItem(Static("Loading commits...", markup=False)))
         try:
             self.commits = await self.github.get_commits(
@@ -79,6 +93,7 @@ class RevisionsScreen(Screen):
             self.query_one("#revisions-list", ListView).focus()
         except Exception as e:
             list_view.clear()
+            list_view.border_subtitle = "error"
             list_view.append(ListItem(Static(f"Error: {e}", markup=False)))
         finally:
             filter_input.disabled = False
@@ -96,6 +111,12 @@ class RevisionsScreen(Screen):
         self._commit_labels = []
         self._commit_texts = []
         list_view.clear()
+        if query:
+            list_view.border_subtitle = (
+                f"{len(self.filtered_commits)}/{len(self.commits)} commits"
+            )
+        else:
+            list_view.border_subtitle = f"{len(self.commits)} commits"
         if not self.filtered_commits:
             list_view.append(
                 ListItem(Static("No matching commits.", markup=False))
@@ -117,9 +138,9 @@ class RevisionsScreen(Screen):
         for i, label in enumerate(self._commit_labels):
             original = self._commit_texts[i]
             if index == i:
-                label.update(f"> {original}")
+                label.update(Text(f"> {original}", style="reverse"))
             else:
-                label.update(f"  {original}")
+                label.update(Text(f"  {original}"))
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
         self._sync_selection()
@@ -135,9 +156,14 @@ class RevisionsScreen(Screen):
         self.query_one("#revisions-list", ListView).action_cursor_up()
 
     def action_focus_filter(self) -> None:
-        self.query_one("#revisions-filter", Input).focus()
+        filter_input = self.query_one("#revisions-filter", Input)
+        filter_input.remove_class("hidden")
+        filter_input.focus()
 
     def action_focus_list(self) -> None:
+        filter_input = self.query_one("#revisions-filter", Input)
+        if not filter_input.value:
+            filter_input.add_class("hidden")
         self.query_one("#revisions-list", ListView).focus()
 
     def action_pop_screen(self) -> None:

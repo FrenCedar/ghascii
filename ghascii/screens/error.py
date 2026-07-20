@@ -1,6 +1,6 @@
 """Generic error modal screen."""
 
-from textual.containers import Center, Vertical
+from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Static
 
@@ -18,12 +18,14 @@ class ErrorScreen(Screen):
         self.message = message
 
     def compose(self) -> None:
-        yield Vertical(
-            Static("Error", id="error-title"),
+        box = Vertical(
             Static(self.message, id="error-message"),
-            Center(Static("[ Press Enter or Escape ]", id="error-dismiss")),
             id="error-box",
+            classes="modal-box",
         )
+        box.border_title = "Error"
+        box.border_subtitle = "enter/esc: dismiss"
+        yield box
 
     def action_pop_screen(self) -> None:
         self.app.pop_screen()

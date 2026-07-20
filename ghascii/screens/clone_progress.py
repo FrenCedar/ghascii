@@ -26,12 +26,14 @@ class CloneProgressScreen(Screen):
         self.clone_url = clone_url
 
     def compose(self) -> None:
-        yield Vertical(
-            Static(f"Cloning {self.owner}/{self.repo}...", id="clone-title"),
+        box = Vertical(
             RichLog(id="clone-log", wrap=False, highlight=False),
-            Static("q: quit | backspace: back", id="clone-footer"),
             id="clone-box",
+            classes="modal-box",
         )
+        box.border_title = f"Cloning {self.owner}/{self.repo}"
+        box.border_subtitle = "backspace: back | q: quit"
+        yield box
 
     def on_mount(self) -> None:
         self.run_worker(self._clone(), exclusive=True)

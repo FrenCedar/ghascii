@@ -138,7 +138,10 @@ async def test_filter_repositories() -> None:
                     await wait_for(lambda: list_contains_text("demo"))
                     await wait_for(lambda: list_contains_text("other-project"))
 
-                    app.screen.query_one("#repo-filter", Input).focus()
+                    await pilot.press("/")
+                    await pilot.pause()
+                    filter_input = app.screen.query_one("#repo-filter", Input)
+                    assert not filter_input.has_class("hidden")
                     await pilot.press("o", "t", "h")
                     await wait_for(lambda: list_contains_text("other-project"))
                     await wait_for(lambda: not list_contains_text("demo"))

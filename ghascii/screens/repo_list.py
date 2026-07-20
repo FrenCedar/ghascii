@@ -1,11 +1,12 @@
 """Repository list screen."""
 
-from textual.containers import Vertical
+from rich.text import Text
 from textual.screen import Screen
 from textual.widgets import Input, ListItem, ListView, Static
 
 from ghascii.github import GitHubClient
 from ghascii.screens.file_tree import FileTreeScreen
+from ghascii.ui import breadcrumb, keybar
 
 
 class RepoListScreen(Screen):
@@ -29,16 +30,29 @@ class RepoListScreen(Screen):
         self._repo_texts: list[str] = []
 
     def compose(self) -> None:
-        yield Static("[cyan]ghascii[/cyan]  |  Your repositories", id="repo-title")
-        yield Input(
-            placeholder="Filter repositories... (Esc to return)",
+        yield Static(breadcrumb("repositories"), classes="bar-top")
+        filter_input = Input(
+            placeholder="type to filter...",
             id="repo-filter",
+            classes="panel hidden",
             disabled=True,
         )
-        yield ListView(id="repo-list")
+        filter_input.border_title = "Filter"
+        filter_input.border_subtitle = "esc: close"
+        yield filter_input
+        list_view = ListView(id="repo-list", classes="panel")
+        list_view.border_title = "Your repositories"
+        yield list_view
         yield Static(
-            "q: quit | r: refresh | /: filter | j/k: move | enter: open",
-            id="repo-footer",
+            keybar(
+                ("j/k", "move"),
+                ("enter", "open"),
+                ("/", "filter"),
+                ("r", "refresh"),
+                ("?", "help"),
+                ("q", "quit"),
+            ),
+            classes="bar-bottom",
         )
 
     def on_mount(self) -> None:
@@ -56,6 +70,7 @@ class RepoListScreen(Screen):
         filter_input = self.query_one("#repo-filter", Input)
         list_view.clear()
         filter_input.disabled = True
+        list_view.border_subtitle = "loading..."
         list_view.append(ListItem(Static("Loading...", markup=False)))
         try:
             self.repos = await self.github.list_repositories()
@@ -63,6 +78,7 @@ class RepoListScreen(Screen):
             self.query_one("#repo-list", ListView).focus()
         except Exception as e:
             list_view.clear()
+            list_view.border_subtitle = "error"
             list_view.append(ListItem(Static(f"Error: {e}", markup=False)))
         finally:
             filter_input.disabled = False
@@ -77,6 +93,12 @@ class RepoListScreen(Screen):
         self._repo_labels = []
         self._repo_texts = []
         list_view.clear()
+        if query:
+            list_view.border_subtitle = (
+                f"{len(self.filtered_repos)}/{len(self.repos)} repos"
+            )
+        else:
+            list_view.border_subtitle = f"{len(self.repos)} repos"
         if not self.filtered_repos:
             list_view.append(
                 ListItem(Static("No matching repositories.", markup=False))
@@ -98,9 +120,9 @@ class RepoListScreen(Screen):
         for i, label in enumerate(self._repo_labels):
             original = self._repo_texts[i]
             if index == i:
-                label.update(f"> {original}")
+                label.update(Text(f"> {original}", style="reverse"))
             else:
-                label.update(f"  {original}")
+                label.update(Text(f"  {original}"))
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
         self._sync_selection()
@@ -119,9 +141,14 @@ class RepoListScreen(Screen):
         self.query_one("#repo-list", ListView).action_cursor_up()
 
     def action_focus_filter(self) -> None:
-        self.query_one("#repo-filter", Input).focus()
+        filter_input = self.query_one("#repo-filter", Input)
+        filter_input.remove_class("hidden")
+        filter_input.focus()
 
     def action_focus_list(self) -> None:
+        filter_input = self.query_one("#repo-filter", Input)
+        if not filter_input.value:
+            filter_input.add_class("hidden")
         self.query_one("#repo-list", ListView).focus()
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:

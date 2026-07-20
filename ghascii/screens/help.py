@@ -15,21 +15,25 @@ class HelpScreen(Screen):
 
     def compose(self) -> None:
         text = (
-            "ghascii controls\n\n"
-            "up/down or j/k  move selection\n"
+            "up/down or j/k  move selection / scroll\n"
             "enter           open selected item\n"
             "backspace or h  go back\n"
+            "/               filter the current list\n"
+            "esc             close filter / return to list\n"
             "r               refresh\n"
             "c               clone current repo\n"
+            "v               revision history (file view)\n"
             "?               show this help\n"
             "q               quit"
         )
-        yield Vertical(
-            Static("Help", id="help-title"),
+        box = Vertical(
             Static(text, id="help-text"),
-            Static("Press q to close", id="help-footer"),
             id="help-box",
+            classes="modal-box",
         )
+        box.border_title = "Help"
+        box.border_subtitle = "q: close"
+        yield box
 
     def action_pop_screen(self) -> None:
         self.app.pop_screen()

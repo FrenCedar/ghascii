@@ -3,11 +3,11 @@
 from rich.markdown import Markdown
 from rich.syntax import Syntax
 
-from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import RichLog, Static
 
 from ghascii.github import GitHubClient
+from ghascii.ui import breadcrumb, keybar
 
 
 class CodeViewScreen(Screen):
@@ -16,7 +16,10 @@ class CodeViewScreen(Screen):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("backspace", "pop_screen", "Back"),
+        ("h", "pop_screen", "Back"),
         ("v", "revisions", "Revisions"),
+        ("j", "scroll_down", "Down"),
+        ("k", "scroll_up", "Up"),
     ]
 
     def __init__(
@@ -35,17 +38,28 @@ class CodeViewScreen(Screen):
         self.ref = ref
 
     def compose(self) -> None:
-        ref_label = f" ({self.ref[:12]})" if self.ref != "HEAD" else ""
         yield Static(
-            f"[cyan]ghascii[/cyan]  |  {self.owner}/{self.repo}: {self.path}{ref_label}",
-            id="code-title",
+            breadcrumb("repositories", f"{self.owner}/{self.repo}", self.path),
+            classes="bar-top",
         )
-        yield RichLog(id="code-view", wrap=False, highlight=True)
+        log = RichLog(id="code-view", wrap=False, highlight=True, classes="panel")
+        log.border_title = self.path.rsplit("/", 1)[-1]
+        log.border_subtitle = (
+            self.ref[:12] if self.ref != "HEAD" else "latest"
+        )
+        yield log
         yield Static(
-            "q: quit | backspace: back | v: revisions", id="code-footer"
+            keybar(
+                ("j/k", "scroll"),
+                ("v", "revisions"),
+                ("h", "back"),
+                ("q", "quit"),
+            ),
+            classes="bar-bottom",
         )
 
     def on_mount(self) -> None:
+        self.query_one("#code-view", RichLog).focus()
         self.run_worker(self._load_file(), exclusive=True)
 
     async def _load_file(self) -> None:
@@ -75,6 +89,12 @@ class CodeViewScreen(Screen):
 
     def action_pop_screen(self) -> None:
         self.app.pop_screen()
+
+    def action_scroll_down(self) -> None:
+        self.query_one("#code-view", RichLog).scroll_relative(y=1, animate=False)
+
+    def action_scroll_up(self) -> None:
+        self.query_one("#code-view", RichLog).scroll_relative(y=-1, animate=False)
 
     def action_revisions(self) -> None:
         from ghascii.screens.revisions import RevisionsScreen

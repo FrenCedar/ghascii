@@ -23,8 +23,7 @@ class LoginScreen(Screen):
         self.http_client = httpx.AsyncClient(follow_redirects=True)
 
     def compose(self) -> None:
-        yield Vertical(
-            Static("ghascii", id="login-title"),
+        box = Vertical(
             Static(
                 "Authenticate with GitHub to view your repositories.\n\n"
                 "Press Enter to start device login.",
@@ -32,7 +31,11 @@ class LoginScreen(Screen):
             ),
             Center(Static("[ Login ]", id="login-button")),
             id="login-box",
+            classes="modal-box",
         )
+        box.border_title = "ghascii"
+        box.border_subtitle = "enter: login | q: quit"
+        yield box
 
     def action_login(self) -> None:
         self._start_login()

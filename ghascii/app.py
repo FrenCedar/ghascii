@@ -18,69 +18,57 @@ class GhasciiApp(App):
         color: white;
     }
 
-    #login-screen, #clone-screen, #help-screen, #error-screen {
-        align: center middle;
-    }
-
-    #login-box {
-        width: 70;
-        height: auto;
-        padding: 2 3;
-        background: ansi_bright_black;
-    }
-    #login-title {
-        text-align: center;
-        text-style: bold;
-        color: cyan;
-        padding-bottom: 1;
-    }
-    #login-status {
-        text-align: center;
-        color: white;
-        padding-bottom: 1;
-    }
-    #login-button {
-        text-align: center;
-        text-style: bold;
-        color: black;
-        background: cyan;
-        padding: 1 2;
-    }
-
-    #repo-title, #tree-title, #code-title, #revisions-title {
+    /* --- Segment: top header bar (brand + breadcrumb) ------------------- */
+    .bar-top {
         dock: top;
-        height: auto;
-        padding: 0 2;
-        text-style: bold;
-        background: ansi_bright_black;
-        color: white;
-    }
-
-    #repo-footer, #tree-footer, #code-footer, #clone-footer, #revisions-footer {
-        dock: bottom;
-        height: auto;
-        padding: 0 2;
-        background: ansi_bright_black;
-        color: white;
-    }
-
-    Input {
-        height: auto;
-        margin: 0 2;
+        height: 1;
         padding: 0 1;
-        background: ansi_bright_black;
-        color: white;
-    }
-    Input:focus {
-        background: cyan;
-        color: black;
+        background: black;
     }
 
+    /* --- Segment: bottom keybar ----------------------------------------- */
+    .bar-bottom {
+        dock: bottom;
+        height: 1;
+        padding: 0 1;
+        background: black;
+    }
+
+    /* --- Segment: framed content panels --------------------------------- */
+    .panel {
+        border: ascii ansi_bright_black;
+        border-title-color: white;
+        border-title-style: bold;
+        border-subtitle-color: ansi_bright_black;
+        background: black;
+    }
+    .panel:focus {
+        border: ascii cyan;
+        border-title-color: cyan;
+        border-subtitle-color: cyan;
+    }
+
+    /* --- Segment: filter panel (hidden until "/") ------------------------ */
+    Input.panel {
+        height: 3;
+        margin: 0;
+        padding: 0 1;
+        background: black;
+        color: white;
+    }
+    Input.panel:focus {
+        background: black;
+        color: white;
+    }
+    .hidden {
+        display: none;
+    }
+
+    /* --- Lists, trees, code --------------------------------------------- */
     #repo-list, #file-tree, #revisions-list {
         width: 100%;
         height: 1fr;
         padding: 0 1;
-        background: ansi_bright_black;
     }
 
     ListView > ListItem {
@@ -95,7 +83,6 @@ class GhasciiApp(App):
     }
 
     #file-tree {
-        background: ansi_bright_black;
         color: white;
     }
     #file-tree > .tree--cursor {
@@ -107,6 +94,7 @@ class GhasciiApp(App):
     #code-view {
         width: 100%;
         height: 1fr;
+        padding: 0 1;
         scrollbar-size: 0 0;
         background: black;
     }
@@ -114,45 +102,47 @@ class GhasciiApp(App):
         background-tint: black 0%;
     }
 
-    #clone-box {
+    /* --- Modal screens (login, help, error, clone) ----------------------- */
+    #login-screen, #clone-screen, #help-screen, #error-screen {
+        align: center middle;
+    }
+
+    .modal-box {
         width: 70;
         height: auto;
-        padding: 2 3;
-        background: ansi_bright_black;
+        padding: 1 2;
+        border: ascii cyan;
+        border-title-color: cyan;
+        border-title-style: bold;
+        border-subtitle-color: ansi_bright_black;
+        background: black;
     }
-    #clone-title {
+
+    #login-status {
+        text-align: center;
+        color: white;
+        padding: 1 0;
+    }
+    #login-button {
+        text-align: center;
         text-style: bold;
-        color: cyan;
-        padding-bottom: 1;
+        color: black;
+        background: cyan;
+        padding: 0 2;
     }
+
     #clone-log {
         height: auto;
         max-height: 20;
         background: black;
     }
 
-    #error-box, #help-box {
-        width: 60;
-        height: auto;
-        padding: 2 3;
-        background: ansi_bright_black;
-    }
-    #error-title, #help-title {
-        text-align: center;
-        text-style: bold;
-        color: cyan;
-        padding-bottom: 1;
-    }
     #error-message {
         padding: 1 0;
         color: red;
     }
     #help-text {
         padding: 1 0;
-        color: white;
-    }
-    #error-dismiss, #help-footer {
-        text-align: center;
         color: white;
     }
     """

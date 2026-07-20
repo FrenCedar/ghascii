@@ -3,7 +3,6 @@
 from typing import Any
 
 from rich.text import Text
-from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Input, Static, Tree
 from textual.widgets.tree import TreeNode
@@ -11,17 +10,20 @@ from textual.widgets.tree import TreeNode
 from ghascii.github import GitHubClient
 from ghascii.screens.clone_progress import CloneProgressScreen
 from ghascii.screens.code_view import CodeViewScreen
+from ghascii.ui import breadcrumb, keybar
 
 
 class AsciiTree(Tree):
-    """Tree widget that uses ASCII-only guide lines and icons."""
+    """Tree widget that renders as a flat, ASCII-only dropdown."""
 
+    show_guides = False
+    guide_depth = 0
     ICON_NODE = "+ "
     ICON_NODE_EXPANDED = "- "
     LINES = {
-        "default": ("  ", "| ", "`-", "|-"),
-        "bold": ("  ", "| ", "`-", "|-"),
-        "double": ("  ", "| ", "`-", "|-"),
+        "default": ("", "", "", ""),
+        "bold": ("", "", "", ""),
+        "double": ("", "", "", ""),
     }
 
     def render_label(
@@ -37,12 +39,11 @@ class AsciiTree(Tree):
             )
         else:
             prefix = ("  ", base_style)
-        indicator = (
-            ("> ", style)
-            if node == self.cursor_node
-            else ("  ", base_style)
-        )
+        is_cursor = node == self.cursor_node
+        indicator = ("> ", style) if is_cursor else ("  ", base_style)
         text = Text.assemble(indicator, prefix, node_label)
+        if is_cursor:
+            text.stylize("reverse")
         return text
 
 
@@ -52,6 +53,7 @@ class FileTreeScreen(Screen):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("backspace", "pop_screen", "Back"),
+        ("h", "pop_screen", "Back"),
         ("r", "refresh", "Refresh"),
         ("c", "clone", "Clone locally"),
         ("j", "cursor_down", "Down"),
@@ -73,20 +75,35 @@ class FileTreeScreen(Screen):
         self.repo = repo
         self.clone_url = clone_url
         self._tree_data: dict[str, Any] = {}
+        self._file_count = 0
 
     def compose(self) -> None:
         yield Static(
-            f"[cyan]ghascii[/cyan]  |  {self.owner}/{self.repo}", id="tree-title"
+            breadcrumb("repositories", f"{self.owner}/{self.repo}"),
+            classes="bar-top",
         )
-        yield Input(
-            placeholder="Filter files... (Esc to return)",
+        filter_input = Input(
+            placeholder="type to filter...",
             id="tree-filter",
+            classes="panel hidden",
             disabled=True,
         )
-        yield AsciiTree("root", id="file-tree")
+        filter_input.border_title = "Filter"
+        filter_input.border_subtitle = "esc: close"
+        yield filter_input
+        tree = AsciiTree("root", id="file-tree", classes="panel")
+        tree.border_title = "Files"
+        yield tree
         yield Static(
-            "q: quit | backspace: back | /: filter | j/k: move | enter: open | c: clone",
-            id="tree-footer",
+            keybar(
+                ("j/k", "move"),
+                ("enter", "open"),
+                ("/", "filter"),
+                ("c", "clone"),
+                ("h", "back"),
+                ("q", "quit"),
+            ),
+            classes="bar-bottom",
         )
 
     def on_mount(self) -> None:
@@ -99,6 +116,7 @@ class FileTreeScreen(Screen):
         filter_input = self.query_one("#tree-filter", Input)
         filter_input.disabled = True
         tree.clear()
+        tree.border_subtitle = "loading..."
         tree.root.add("Loading tree...")
         try:
             branch = await self.github.get_default_branch(self.owner, self.repo)
@@ -109,11 +127,15 @@ class FileTreeScreen(Screen):
                 self.owner, self.repo, commit_sha
             )
             tree_list = await self.github.get_tree(self.owner, self.repo, tree_sha)
+            self._file_count = sum(
+                1 for e in tree_list if e.get("type") == "blob"
+            )
             self._tree_data = self._build_tree_data(tree_list)
             self._apply_filter()
             self.query_one("#file-tree", AsciiTree).focus()
         except Exception as e:
             tree.clear()
+            tree.border_subtitle = "error"
             tree.root.add(f"Error: {e}")
         finally:
             filter_input.disabled = False
@@ -146,6 +168,10 @@ class FileTreeScreen(Screen):
         query = filter_input.value.lower()
         tree.clear()
         self._populate_node(tree.root, self._tree_data, query, "")
+        if query:
+            tree.border_subtitle = f"filtered / {self._file_count} files"
+        else:
+            tree.border_subtitle = f"{self._file_count} files"
         if not tree.root.children:
             tree.root.add("No matching files.")
 
@@ -207,9 +233,14 @@ class FileTreeScreen(Screen):
         self.app.pop_screen()
 
     def action_focus_filter(self) -> None:
-        self.query_one("#tree-filter", Input).focus()
+        filter_input = self.query_one("#tree-filter", Input)
+        filter_input.remove_class("hidden")
+        filter_input.focus()
 
     def action_focus_tree(self) -> None:
+        filter_input = self.query_one("#tree-filter", Input)
+        if not filter_input.value:
+            filter_input.add_class("hidden")
         self.query_one("#file-tree", AsciiTree).focus()
 
     def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
