@@ -14,8 +14,8 @@ class GhasciiApp(App):
 
     CSS = """
     Screen {
-        background: #0f172a;
-        color: #e2e8f0;
+        background: black;
+        color: white;
     }
 
     #login-screen, #clone-screen, #help-screen, #error-screen {
@@ -26,7 +26,7 @@ class GhasciiApp(App):
         width: 70;
         height: auto;
         padding: 2 3;
-        background: #1e293b;
+        background: ansi_bright_black;
     }
     #login-title {
         text-align: center;
@@ -36,7 +36,7 @@ class GhasciiApp(App):
     }
     #login-status {
         text-align: center;
-        color: #94a3b8;
+        color: white;
         padding-bottom: 1;
     }
     #login-button {
@@ -60,56 +60,62 @@ class GhasciiApp(App):
         dock: bottom;
         height: auto;
         padding: 0 2;
-        background: #1e293b;
-        color: #e2e8f0;
+        background: ansi_bright_black;
+        color: white;
     }
 
     Input {
         height: auto;
         margin: 0 2;
         padding: 0 1;
-        background: #1e293b;
-        color: #e2e8f0;
+        background: ansi_bright_black;
+        color: white;
     }
     Input:focus {
-        background: #334155;
+        background: cyan;
+        color: black;
     }
 
     #repo-list, #file-tree {
         width: 100%;
         height: 1fr;
         padding: 0 1;
-        background: #0f172a;
+        background: black;
     }
 
     ListView > ListItem {
         padding: 0 1;
-        background: #0f172a;
-        color: #e2e8f0;
+        background: black;
+        color: white;
     }
     ListView > ListItem.--highlight {
-        background: cyan;
+        background: white;
         color: black;
         text-style: bold;
     }
 
     #file-tree {
-        background: #0f172a;
-        color: #e2e8f0;
+        background: black;
+        color: white;
+    }
+    #file-tree .tree--cursor {
+        background: white;
+        color: black;
+        text-style: bold;
     }
 
     #code-view {
         width: 100%;
         height: 1fr;
         scrollbar-size: 0 0;
-        background: #0f172a;
+        background: black;
     }
 
     #clone-box {
         width: 70;
         height: auto;
         padding: 2 3;
-        background: #1e293b;
+        background: ansi_bright_black;
     }
     #clone-title {
         text-style: bold;
@@ -119,14 +125,14 @@ class GhasciiApp(App):
     #clone-log {
         height: auto;
         max-height: 20;
-        background: #0f172a;
+        background: black;
     }
 
     #error-box, #help-box {
         width: 60;
         height: auto;
         padding: 2 3;
-        background: #1e293b;
+        background: ansi_bright_black;
     }
     #error-title, #help-title {
         text-align: center;
@@ -140,11 +146,11 @@ class GhasciiApp(App):
     }
     #help-text {
         padding: 1 0;
-        color: #e2e8f0;
+        color: white;
     }
     #error-dismiss, #help-footer {
         text-align: center;
-        color: #94a3b8;
+        color: white;
     }
     """
 

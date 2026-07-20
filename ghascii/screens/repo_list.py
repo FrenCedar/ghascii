@@ -17,6 +17,7 @@ class RepoListScreen(Screen):
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
         ("/", "focus_filter", "Filter"),
+        ("escape", "focus_list", "List"),
     ]
 
     def __init__(self, github: GitHubClient) -> None:
@@ -28,7 +29,7 @@ class RepoListScreen(Screen):
     def compose(self) -> None:
         yield Static("Your repositories", id="repo-title")
         yield Input(
-            placeholder="Filter repositories...",
+            placeholder="Filter repositories... (Esc to return)",
             id="repo-filter",
             disabled=True,
         )
@@ -57,6 +58,7 @@ class RepoListScreen(Screen):
         try:
             self.repos = await self.github.list_repositories()
             self._apply_filter()
+            self.query_one("#repo-list", ListView).focus()
         except Exception as e:
             list_view.clear()
             list_view.append(ListItem(Static(f"Error: {e}", markup=False)))
@@ -76,6 +78,8 @@ class RepoListScreen(Screen):
             return
         for repo in self.filtered_repos:
             list_view.append(ListItem(Static(self._repo_text(repo), markup=False)))
+        if self.filtered_repos:
+            list_view.index = 0
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "repo-filter":
@@ -92,6 +96,9 @@ class RepoListScreen(Screen):
 
     def action_focus_filter(self) -> None:
         self.query_one("#repo-filter", Input).focus()
+
+    def action_focus_list(self) -> None:
+        self.query_one("#repo-list", ListView).focus()
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         index = event.index
