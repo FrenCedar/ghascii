@@ -16,24 +16,34 @@ class CodeViewScreen(Screen):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("backspace", "pop_screen", "Back"),
+        ("v", "revisions", "Revisions"),
     ]
 
     def __init__(
-        self, github: GitHubClient, owner: str, repo: str, path: str
+        self,
+        github: GitHubClient,
+        owner: str,
+        repo: str,
+        path: str,
+        ref: str = "HEAD",
     ) -> None:
         super().__init__()
         self.github = github
         self.owner = owner
         self.repo = repo
         self.path = path
+        self.ref = ref
 
     def compose(self) -> None:
+        ref_label = f" ({self.ref[:12]})" if self.ref != "HEAD" else ""
         yield Static(
-            f"[cyan]ghascii[/cyan]  |  {self.owner}/{self.repo}: {self.path}",
+            f"[cyan]ghascii[/cyan]  |  {self.owner}/{self.repo}: {self.path}{ref_label}",
             id="code-title",
         )
         yield RichLog(id="code-view", wrap=False, highlight=True)
-        yield Static("q: quit | backspace: back", id="code-footer")
+        yield Static(
+            "q: quit | backspace: back | v: revisions", id="code-footer"
+        )
 
     def on_mount(self) -> None:
         self.run_worker(self._load_file(), exclusive=True)
@@ -42,7 +52,7 @@ class CodeViewScreen(Screen):
         log = self.query_one("#code-view", RichLog)
         try:
             content = await self.github.get_file_content(
-                self.owner, self.repo, self.path
+                self.owner, self.repo, self.path, ref=self.ref
             )
             log.clear()
             if self.path.lower().endswith((".md", ".markdown")):
@@ -54,9 +64,10 @@ class CodeViewScreen(Screen):
                 syntax = Syntax(
                     content,
                     extension,
-                    theme="default",
+                    theme="ansi_dark",
                     line_numbers=True,
                     word_wrap=False,
+                    background_color="default",
                 )
                 log.write(syntax)
         except Exception as e:
@@ -64,3 +75,10 @@ class CodeViewScreen(Screen):
 
     def action_pop_screen(self) -> None:
         self.app.pop_screen()
+
+    def action_revisions(self) -> None:
+        from ghascii.screens.revisions import RevisionsScreen
+
+        self.app.push_screen(
+            RevisionsScreen(self.github, self.owner, self.repo, self.path)
+        )

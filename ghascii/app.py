@@ -47,7 +47,7 @@ class GhasciiApp(App):
         padding: 1 2;
     }
 
-    #repo-title, #tree-title, #code-title {
+    #repo-title, #tree-title, #code-title, #revisions-title {
         dock: top;
         height: auto;
         padding: 0 2;
@@ -56,7 +56,7 @@ class GhasciiApp(App):
         color: white;
     }
 
-    #repo-footer, #tree-footer, #code-footer, #clone-footer {
+    #repo-footer, #tree-footer, #code-footer, #clone-footer, #revisions-footer {
         dock: bottom;
         height: auto;
         padding: 0 2;
@@ -76,7 +76,7 @@ class GhasciiApp(App):
         color: black;
     }
 
-    #repo-list, #file-tree {
+    #repo-list, #file-tree, #revisions-list {
         width: 100%;
         height: 1fr;
         padding: 0 1;
@@ -109,6 +109,9 @@ class GhasciiApp(App):
         height: 1fr;
         scrollbar-size: 0 0;
         background: black;
+    }
+    #code-view:focus {
+        background-tint: black 0%;
     }
 
     #clone-box {

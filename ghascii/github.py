@@ -80,6 +80,19 @@ class GitHubClient:
         data = await self.request("GET", f"/repos/{owner}/{repo}", ttl=60)
         return data.get("default_branch", "main")
 
+    async def get_commits(
+        self, owner: str, repo: str, path: str = "", per_page: int = 30
+    ) -> list[dict]:
+        """Return recent commits for the repo, optionally filtered by file path."""
+        params: dict[str, str] = {"per_page": str(per_page)}
+        if path:
+            params["path"] = path
+        return await self.request(
+            "GET",
+            f"/repos/{owner}/{repo}/commits",
+            params=params,
+        )
+
     async def get_latest_commit_sha(self, owner: str, repo: str, branch: str) -> str:
         data = await self.request(
             "GET",
