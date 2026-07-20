@@ -128,14 +128,24 @@ class GhasciiApp(App):
     }
 
     #menu-box {
-        width: 40;
+        width: 30;
         height: auto;
         align: center middle;
+        text-align: center;
+        padding: 1 2;
     }
     #menu-title {
         text-align: center;
         text-style: bold;
         padding: 1 0;
+    }
+    #menu-list {
+        width: auto;
+        height: auto;
+        align: center middle;
+    }
+    #menu-list ListItem {
+        text-align: center;
     }
 
     .modal-box {

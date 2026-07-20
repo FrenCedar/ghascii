@@ -4,8 +4,6 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import ListItem, ListView, Static
 
-from ghascii.ui import breadcrumb, keybar
-
 
 class MenuScreen(Screen):
     """Options menu reachable from any screen via Escape."""
@@ -16,7 +14,6 @@ class MenuScreen(Screen):
     ]
 
     def compose(self):
-        yield Static(breadcrumb("menu"), classes="bar-top")
         yield Vertical(
             Static("ghascii", id="menu-title"),
             ListView(
@@ -26,10 +23,6 @@ class MenuScreen(Screen):
             ),
             id="menu-box",
             classes="modal-box",
-        )
-        yield Static(
-            keybar(("enter", "select"), ("esc", "resume"), ("q", "quit")),
-            classes="bar-bottom",
         )
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
