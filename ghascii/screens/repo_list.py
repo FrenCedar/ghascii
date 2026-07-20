@@ -25,6 +25,8 @@ class RepoListScreen(Screen):
         self.github = github
         self.repos: list[dict] = []
         self.filtered_repos: list[dict] = []
+        self._repo_labels: list[Static] = []
+        self._repo_texts: list[str] = []
 
     def compose(self) -> None:
         yield Static("[cyan]ghascii[/cyan]  |  Your repositories", id="repo-title")
@@ -72,14 +74,36 @@ class RepoListScreen(Screen):
         self.filtered_repos = [
             repo for repo in self.repos if query in repo.get("name", "").lower()
         ]
+        self._repo_labels = []
+        self._repo_texts = []
         list_view.clear()
         if not self.filtered_repos:
-            list_view.append(ListItem(Static("No matching repositories.", markup=False)))
+            list_view.append(
+                ListItem(Static("No matching repositories.", markup=False))
+            )
             return
         for repo in self.filtered_repos:
-            list_view.append(ListItem(Static(self._repo_text(repo), markup=False)))
+            text = self._repo_text(repo)
+            label = Static(text, markup=False)
+            self._repo_labels.append(label)
+            self._repo_texts.append(text)
+            list_view.append(ListItem(label))
         if self.filtered_repos:
             list_view.index = 0
+            self._sync_selection()
+
+    def _sync_selection(self) -> None:
+        list_view = self.query_one("#repo-list", ListView)
+        index = list_view.index
+        for i, label in enumerate(self._repo_labels):
+            original = self._repo_texts[i]
+            if index == i:
+                label.update(f"> {original}")
+            else:
+                label.update(original)
+
+    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+        self._sync_selection()
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "repo-filter":

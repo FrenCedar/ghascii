@@ -34,6 +34,8 @@ class RevisionsScreen(Screen):
         self.path = path
         self.commits: list[dict] = []
         self.filtered_commits: list[dict] = []
+        self._commit_labels: list[Static] = []
+        self._commit_texts: list[str] = []
 
     def compose(self) -> None:
         label = f"{self.owner}/{self.repo}"
@@ -91,6 +93,8 @@ class RevisionsScreen(Screen):
             if query in c.get("commit", {}).get("message", "").lower()
             or query in c.get("sha", "").lower()
         ]
+        self._commit_labels = []
+        self._commit_texts = []
         list_view.clear()
         if not self.filtered_commits:
             list_view.append(
@@ -98,9 +102,27 @@ class RevisionsScreen(Screen):
             )
             return
         for commit in self.filtered_commits:
-            list_view.append(ListItem(Static(self._commit_text(commit), markup=False)))
+            text = self._commit_text(commit)
+            label = Static(text, markup=False)
+            self._commit_labels.append(label)
+            self._commit_texts.append(text)
+            list_view.append(ListItem(label))
         if self.filtered_commits:
             list_view.index = 0
+            self._sync_selection()
+
+    def _sync_selection(self) -> None:
+        list_view = self.query_one("#revisions-list", ListView)
+        index = list_view.index
+        for i, label in enumerate(self._commit_labels):
+            original = self._commit_texts[i]
+            if index == i:
+                label.update(f"> {original}")
+            else:
+                label.update(original)
+
+    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+        self._sync_selection()
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "revisions-filter":

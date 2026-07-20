@@ -158,7 +158,7 @@ class FileTreeScreen(Screen):
         for name in sorted(data["dirs"]):
             sub = data["dirs"][name]
             path = f"{prefix}/{name}".lstrip("/") if prefix else name
-            child = node.add(f"[D] {name}", data={"kind": "dir", "path": path})
+            child = node.add(name, data={"kind": "dir", "path": path})
             sub_match = self._populate_node(child, sub, query, path)
             dir_matches = not query or query in name.lower()
             if not dir_matches and not sub_match:
@@ -172,7 +172,7 @@ class FileTreeScreen(Screen):
                 file_entry = data["files"][name]
                 full_path = file_entry.get("path", "")
                 node.add(
-                    f"[F] {name}",
+                    name,
                     data={"kind": "file", "entry": file_entry, "path": full_path},
                 )
                 has_match = True
