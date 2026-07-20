@@ -68,9 +68,13 @@ class DiffScreen(Screen):
             if not diff.strip():
                 log.write("No changes in this commit.")
                 return
+            # Hide the index lines that expose commit SHAs.
+            filtered = "\n".join(
+                line for line in diff.splitlines() if not line.startswith("index ")
+            )
             log.write(
                 Syntax(
-                    diff,
+                    filtered,
                     "diff",
                     theme="ansi_dark",
                     word_wrap=False,
