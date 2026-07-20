@@ -29,6 +29,7 @@ class AsciiTree(Tree):
     ) -> Text:
         node_label = node._label.copy()
         node_label.stylize(style)
+        node_label.stylize("white")
         if node._allow_expand:
             prefix = (
                 self.ICON_NODE_EXPANDED if node.is_expanded else self.ICON_NODE,
