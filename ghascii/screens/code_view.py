@@ -58,3 +58,6 @@ class CodeViewScreen(Screen):
                 log.write(syntax)
         except Exception as e:
             log.write(f"Error loading file: {e}")
+
+    def action_pop_screen(self) -> None:
+        self.app.pop_screen()

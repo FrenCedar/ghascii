@@ -176,6 +176,9 @@ class FileTreeScreen(Screen):
     def action_cursor_up(self) -> None:
         self.query_one("#file-tree", AsciiTree).action_cursor_up()
 
+    def action_pop_screen(self) -> None:
+        self.app.pop_screen()
+
     def action_focus_filter(self) -> None:
         self.query_one("#tree-filter", Input).focus()
 
