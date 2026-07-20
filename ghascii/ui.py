@@ -4,13 +4,13 @@ from rich.text import Text
 
 
 def breadcrumb(*parts: str) -> Text:
-    """Build the top header bar: a brand block followed by breadcrumb parts."""
+    """Build the top header bar: breadcrumb parts without a brand block."""
     bar = Text()
-    bar.append(" ghascii ", style="black on cyan")
-    for part in parts:
+    for i, part in enumerate(parts):
         if not part:
             continue
-        bar.append(" > ", style="bright_black")
+        if i:
+            bar.append(" > ", style="bright_black")
         bar.append(part, style="bold white")
     return bar
 
