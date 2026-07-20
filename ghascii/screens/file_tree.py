@@ -35,7 +35,7 @@ class AsciiTree(Tree):
                 base_style,
             )
         else:
-            prefix = ("", base_style)
+            prefix = ("  ", base_style)
         indicator = (
             ("> ", style)
             if node == self.cursor_node
