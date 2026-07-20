@@ -34,13 +34,18 @@ environment.
 On Arch Linux (no desktop environment):
 
 ```bash
-sudo pacman -S python python-pip
-pip install --user -e .
+sudo pacman -S python python-pip git
+cd ~/ghascii
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
 ```
 
 ## Run
 
 ```bash
+cd ~/ghascii
+source .venv/bin/activate
 ghascii
 ```
 
@@ -78,6 +83,7 @@ pip install -e .
 ## Tests
 
 ```bash
+source .venv/bin/activate
 pip install -e ".[dev]"
 pytest -v
 ```

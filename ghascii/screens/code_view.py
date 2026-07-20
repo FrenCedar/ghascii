@@ -1,5 +1,6 @@
 """File content viewer screen."""
 
+from rich.markdown import Markdown
 from rich.syntax import Syntax
 
 from textual.containers import Vertical
@@ -41,14 +42,19 @@ class CodeViewScreen(Screen):
                 self.owner, self.repo, self.path
             )
             log.clear()
-            extension = self.path.rsplit(".", 1)[-1] if "." in self.path else "text"
-            syntax = Syntax(
-                content,
-                extension,
-                theme="default",
-                line_numbers=True,
-                word_wrap=False,
-            )
-            log.write(syntax)
+            if self.path.lower().endswith((".md", ".markdown")):
+                log.write(Markdown(content, hyperlinks=False))
+            else:
+                extension = (
+                    self.path.rsplit(".", 1)[-1] if "." in self.path else "text"
+                )
+                syntax = Syntax(
+                    content,
+                    extension,
+                    theme="default",
+                    line_numbers=True,
+                    word_wrap=False,
+                )
+                log.write(syntax)
         except Exception as e:
             log.write(f"Error loading file: {e}")
