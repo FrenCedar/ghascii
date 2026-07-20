@@ -35,6 +35,11 @@ class GhasciiApp(App):
     #error-title, #help-title { text-align: center; text-style: bold; }
     #error-message { padding: 1 0; }
     #help-text { padding: 1 0; }
+    Input {
+        height: auto;
+        margin: 0 2;
+    }
+    Input:focus { background: green; }
     ListView > ListItem { padding: 0 1; }
     ListView > ListItem.--highlight { background: blue; }
     """

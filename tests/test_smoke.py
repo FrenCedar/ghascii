@@ -5,7 +5,7 @@ from contextlib import ExitStack
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from textual.widgets import ListView, Static
+from textual.widgets import Input, ListView, Static
 
 from ghascii.app import GhasciiApp
 from ghascii.github import GitHubClient
@@ -87,3 +87,55 @@ async def test_navigate_to_code_view() -> None:
                 await pilot.pause()
                 await pilot.press("down", "enter")
                 await wait_for(lambda: isinstance(app.screen, CodeViewScreen))
+
+
+@pytest.mark.asyncio
+async def test_filter_repositories() -> None:
+    """The repo list filter input should narrow displayed repositories."""
+    demo_repo = {
+        "name": "demo",
+        "language": "Python",
+        "updated_at": "2024-01-01T00:00:00Z",
+        "private": False,
+        "owner": {"login": "testuser"},
+    }
+    other_repo = {
+        "name": "other-project",
+        "language": "Rust",
+        "updated_at": "2024-02-02T00:00:00Z",
+        "private": True,
+        "owner": {"login": "testuser"},
+    }
+
+    async def wait_for(predicate, timeout: float = 5.0) -> None:
+        deadline = asyncio.get_event_loop().time() + timeout
+        while not predicate() and asyncio.get_event_loop().time() < deadline:
+            await pilot.pause()
+            await asyncio.sleep(0.05)
+        assert predicate()
+
+    def list_contains_text(text: str) -> bool:
+        return any(
+            text in str(static.render())
+            for static in app.screen.query("#repo-list ListItem Static")
+        )
+
+    with patch("ghascii.app.load_token", return_value="fake-token"):
+        app = GhasciiApp()
+        with patch.object(
+            GitHubClient, "verify_token", AsyncMock(return_value={"login": "testuser"})
+        ):
+            with patch.object(
+                GitHubClient,
+                "list_repositories",
+                AsyncMock(return_value=[demo_repo, other_repo]),
+            ):
+                async with app.run_test() as pilot:
+                    await wait_for(lambda: list_contains_text("demo"))
+                    await wait_for(lambda: list_contains_text("other-project"))
+
+                    app.screen.query_one("#repo-filter", Input).focus()
+                    await pilot.press("o", "t", "h")
+                    await wait_for(lambda: list_contains_text("other-project"))
+                    await wait_for(lambda: not list_contains_text("demo"))
+

@@ -2,7 +2,7 @@
 
 from textual.containers import Vertical
 from textual.screen import Screen
-from textual.widgets import ListItem, ListView, Static
+from textual.widgets import Input, ListItem, ListView, Static
 
 from ghascii.github import GitHubClient
 from ghascii.screens.file_tree import FileTreeScreen
@@ -14,49 +14,89 @@ class RepoListScreen(Screen):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("r", "refresh", "Refresh"),
+        ("j", "cursor_down", "Down"),
+        ("k", "cursor_up", "Up"),
+        ("/", "focus_filter", "Filter"),
     ]
 
     def __init__(self, github: GitHubClient) -> None:
         super().__init__()
         self.github = github
         self.repos: list[dict] = []
+        self.filtered_repos: list[dict] = []
 
     def compose(self) -> None:
         yield Static("Your repositories", id="repo-title")
+        yield Input(
+            placeholder="Filter repositories...",
+            id="repo-filter",
+            disabled=True,
+        )
         yield ListView(id="repo-list")
-        yield Static("q: quit | r: refresh | enter: open", id="repo-footer")
+        yield Static(
+            "q: quit | r: refresh | /: filter | j/k: move | enter: open",
+            id="repo-footer",
+        )
 
     def on_mount(self) -> None:
         self.run_worker(self._load_repos(), exclusive=True)
 
+    def _repo_text(self, repo: dict) -> str:
+        name = repo.get("name", "")
+        lang = repo.get("language") or "-"
+        updated = repo.get("updated_at", "")[:10]
+        vis = "private" if repo.get("private") else "public"
+        return f"{name:<32} {lang:<12} {updated:<12} {vis}"
+
     async def _load_repos(self) -> None:
         list_view = self.query_one("#repo-list", ListView)
+        filter_input = self.query_one("#repo-filter", Input)
         list_view.clear()
+        filter_input.disabled = True
         list_view.append(ListItem(Static("Loading...", markup=False)))
         try:
             self.repos = await self.github.list_repositories()
-            list_view.clear()
-            if not self.repos:
-                list_view.append(ListItem(Static("No repositories found.", markup=False)))
-                return
-            for repo in self.repos:
-                name = repo.get("name", "")
-                lang = repo.get("language") or "-"
-                updated = repo.get("updated_at", "")[:10]
-                vis = "private" if repo.get("private") else "public"
-                text = f"{name:<32} {lang:<12} {updated:<12} {vis}"
-                list_view.append(ListItem(Static(text, markup=False)))
+            self._apply_filter()
         except Exception as e:
             list_view.clear()
             list_view.append(ListItem(Static(f"Error: {e}", markup=False)))
+        finally:
+            filter_input.disabled = False
+
+    def _apply_filter(self) -> None:
+        filter_input = self.query_one("#repo-filter", Input)
+        list_view = self.query_one("#repo-list", ListView)
+        query = filter_input.value.lower()
+        self.filtered_repos = [
+            repo for repo in self.repos if query in repo.get("name", "").lower()
+        ]
+        list_view.clear()
+        if not self.filtered_repos:
+            list_view.append(ListItem(Static("No matching repositories.", markup=False)))
+            return
+        for repo in self.filtered_repos:
+            list_view.append(ListItem(Static(self._repo_text(repo), markup=False)))
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "repo-filter":
+            self._apply_filter()
 
     def action_refresh(self) -> None:
         self.run_worker(self._load_repos(), exclusive=True)
 
+    def action_cursor_down(self) -> None:
+        self.query_one("#repo-list", ListView).action_cursor_down()
+
+    def action_cursor_up(self) -> None:
+        self.query_one("#repo-list", ListView).action_cursor_up()
+
+    def action_focus_filter(self) -> None:
+        self.query_one("#repo-filter", Input).focus()
+
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         index = event.index
-        if 0 <= index < len(self.repos):
-            repo = self.repos[index]
+        if 0 <= index < len(self.filtered_repos):
+            repo = self.filtered_repos[index]
             owner = repo.get("owner", {}).get("login", "")
             name = repo.get("name", "")
             clone_url = repo.get("clone_url", "")

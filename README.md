@@ -49,8 +49,10 @@ ghascii
 - `↑/↓` or `j/k` - move selection
 - `Enter` - open selected item
 - `Backspace` or `h` - go back
+- `/` - filter/search the current list
 - `r` - refresh
 - `c` - clone current repository locally (file-tree screen)
+- `?` - help
 - `q` - quit
 
 ## Tests
