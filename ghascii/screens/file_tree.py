@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from rich.text import Text
 from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Input, Static, Tree
@@ -22,6 +23,24 @@ class AsciiTree(Tree):
         "bold": ("  ", "| ", "`-", "|-"),
         "double": ("  ", "| ", "`-", "|-"),
     }
+
+    def render_label(
+        self, node: TreeNode[Any], base_style, style
+    ) -> Text:
+        node_label = node._label.copy()
+        node_label.stylize(style)
+        if node._allow_expand:
+            prefix = (
+                self.ICON_NODE_EXPANDED if node.is_expanded else self.ICON_NODE,
+                base_style,
+            )
+        else:
+            prefix = ("", base_style)
+        if node == self.cursor_node:
+            text = Text.assemble(prefix, ("> ", style), node_label)
+        else:
+            text = Text.assemble(prefix, node_label)
+        return text
 
 
 class FileTreeScreen(Screen):
