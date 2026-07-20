@@ -16,7 +16,8 @@ class HelpScreen(Screen):
     def compose(self) -> None:
         text = (
             "up/down or j/k  move selection / scroll\n"
-            "enter           open selected item\n"
+            "enter           open selected item / view diff\n"
+            "tab             switch files/versions panel\n"
             "backspace or h  go back\n"
             "/               filter the current list\n"
             "esc             close filter / return to list\n"

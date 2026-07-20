@@ -36,6 +36,14 @@ async def test_navigate_to_code_view() -> None:
         "owner": {"login": "testuser"},
     }
     demo_tree = [{"path": "README.md", "type": "blob", "sha": "blobsha"}]
+    demo_commit = {
+        "sha": "commitsha1234567890",
+        "commit": {
+            "message": "Initial commit",
+            "committer": {"date": "2024-01-01T00:00:00Z"},
+            "author": {"name": "testuser"},
+        },
+    }
 
     async def wait_for(predicate, timeout: float = 5.0) -> None:
         deadline = asyncio.get_event_loop().time() + timeout
@@ -68,6 +76,7 @@ async def test_navigate_to_code_view() -> None:
         "get_commit_tree_sha": AsyncMock(return_value="treesha"),
         "get_tree": AsyncMock(return_value=demo_tree),
         "get_file_content": AsyncMock(return_value="# Hello\n"),
+        "get_commits": AsyncMock(return_value=[demo_commit]),
     }
     with patch("ghascii.app.load_token", return_value="fake-token"):
         app = GhasciiApp()
@@ -145,4 +154,85 @@ async def test_filter_repositories() -> None:
                     await pilot.press("o", "t", "h")
                     await wait_for(lambda: list_contains_text("other-project"))
                     await wait_for(lambda: not list_contains_text("demo"))
+
+
+@pytest.mark.asyncio
+async def test_version_panel_opens_diff() -> None:
+    """Tab focuses the version panel; enter on a commit opens the diff view."""
+    from ghascii.screens.diff_view import DiffScreen
+
+    demo_repo = {
+        "name": "demo",
+        "language": "Python",
+        "updated_at": "2024-01-01T00:00:00Z",
+        "private": False,
+        "owner": {"login": "testuser"},
+    }
+    demo_tree = [{"path": "README.md", "type": "blob", "sha": "blobsha"}]
+    demo_commit = {
+        "sha": "commitsha1234567890",
+        "commit": {
+            "message": "Initial commit",
+            "committer": {"date": "2024-01-01T00:00:00Z"},
+            "author": {"name": "testuser"},
+        },
+    }
+    demo_diff = (
+        "diff --git a/README.md b/README.md\n"
+        "--- a/README.md\n"
+        "+++ b/README.md\n"
+        "@@ -1 +1,2 @@\n"
+        " # Hello\n"
+        "+New line\n"
+    )
+
+    async def wait_for(predicate, timeout: float = 5.0) -> None:
+        deadline = asyncio.get_event_loop().time() + timeout
+        while not predicate() and asyncio.get_event_loop().time() < deadline:
+            await pilot.pause()
+            await asyncio.sleep(0.05)
+        assert predicate()
+
+    def versions_loaded() -> bool:
+        lv = app.screen.query_one("#version-list", ListView)
+        return lv.index is not None and len(lv.children) > 0
+
+    patches = {
+        "verify_token": AsyncMock(return_value={"login": "testuser"}),
+        "list_repositories": AsyncMock(return_value=[demo_repo]),
+        "get_default_branch": AsyncMock(return_value="main"),
+        "get_latest_commit_sha": AsyncMock(return_value="commitsha"),
+        "get_commit_tree_sha": AsyncMock(return_value="treesha"),
+        "get_tree": AsyncMock(return_value=demo_tree),
+        "get_commits": AsyncMock(return_value=[demo_commit]),
+        "get_commit_diff": AsyncMock(return_value=demo_diff),
+    }
+    with patch("ghascii.app.load_token", return_value="fake-token"):
+        app = GhasciiApp()
+        with ExitStack() as stack:
+            for name, mock in patches.items():
+                stack.enter_context(patch.object(GitHubClient, name, mock))
+            async with app.run_test() as pilot:
+                await pilot.pause()
+                assert isinstance(app.screen, RepoListScreen)
+
+                def repo_listed() -> bool:
+                    return any(
+                        "demo" in str(s.render())
+                        for s in app.screen.query("#repo-list ListItem Static")
+                    )
+
+                await wait_for(repo_listed)
+                app.screen.query_one("#repo-list", ListView).focus()
+                await pilot.pause()
+                await pilot.press("enter")
+                await wait_for(lambda: isinstance(app.screen, FileTreeScreen))
+
+                await wait_for(versions_loaded)
+                await pilot.press("tab")
+                await pilot.pause()
+                assert app.screen.query_one("#version-list", ListView).has_focus
+                await pilot.press("enter")
+                await wait_for(lambda: isinstance(app.screen, DiffScreen))
+                patches["get_commit_diff"].assert_called_once()
 

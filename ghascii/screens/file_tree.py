@@ -1,15 +1,17 @@
-"""Repository file-tree browser screen."""
+"""Repository browser screen: file tree (2/3) plus version panel (1/3)."""
 
 from typing import Any
 
 from rich.text import Text
+from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Input, Static, Tree
+from textual.widgets import Input, ListItem, ListView, Static, Tree
 from textual.widgets.tree import TreeNode
 
 from ghascii.github import GitHubClient
 from ghascii.screens.clone_progress import CloneProgressScreen
 from ghascii.screens.code_view import CodeViewScreen
+from ghascii.screens.diff_view import DiffScreen
 from ghascii.ui import breadcrumb, keybar
 
 
@@ -48,7 +50,7 @@ class AsciiTree(Tree):
 
 
 class FileTreeScreen(Screen):
-    """Displays a recursive, toggleable file tree for a single repository."""
+    """Split repository browser: file tree left, commit versions right."""
 
     BINDINGS = [
         ("q", "quit", "Quit"),
@@ -58,6 +60,7 @@ class FileTreeScreen(Screen):
         ("c", "clone", "Clone locally"),
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
+        ("tab", "toggle_panel", "Switch panel"),
         ("/", "focus_filter", "Filter"),
         ("escape", "focus_tree", "Tree"),
     ]
@@ -76,6 +79,8 @@ class FileTreeScreen(Screen):
         self.clone_url = clone_url
         self._tree_data: dict[str, Any] = {}
         self._file_count = 0
+        self.commits: list[dict] = []
+        self._version_labels: list[Static] = []
 
     def compose(self) -> None:
         yield Static(
@@ -90,17 +95,22 @@ class FileTreeScreen(Screen):
         )
         filter_input.border_title = "Filter"
         filter_input.border_subtitle = "esc: close"
-        yield filter_input
         tree = AsciiTree("root", id="file-tree", classes="panel")
         tree.border_title = "Files"
-        yield tree
+        versions = ListView(id="version-list", classes="panel")
+        versions.border_title = "Versions"
+        yield Horizontal(
+            Vertical(filter_input, tree, id="tree-left"),
+            versions,
+            id="tree-split",
+        )
         yield Static(
             keybar(
                 ("j/k", "move"),
                 ("enter", "open"),
+                ("tab", "panel"),
                 ("/", "filter"),
                 ("c", "clone"),
-                ("h", "back"),
                 ("q", "quit"),
             ),
             classes="bar-bottom",
@@ -109,7 +119,10 @@ class FileTreeScreen(Screen):
     def on_mount(self) -> None:
         tree = self.query_one("#file-tree", AsciiTree)
         tree.show_root = False
-        self.run_worker(self._load_tree(), exclusive=True)
+        self.run_worker(self._load_tree(), exclusive=True, group="tree")
+        self.run_worker(self._load_versions(), exclusive=True, group="versions")
+
+    # --- File tree (left, 2/3) ------------------------------------------
 
     async def _load_tree(self) -> None:
         tree = self.query_one("#file-tree", AsciiTree)
@@ -208,12 +221,88 @@ class FileTreeScreen(Screen):
                 has_match = True
         return has_match
 
+    # --- Version panel (right, 1/3) -------------------------------------
+
+    def _version_label(self, commit: dict, selected: bool) -> Text:
+        sha = commit.get("sha", "")[:7]
+        date = commit.get("commit", {}).get("committer", {}).get("date", "")[:10]
+        msg = commit.get("commit", {}).get("message", "").splitlines()[0]
+        marker = ">" if selected else " "
+        label = Text(no_wrap=True, overflow="crop")
+        label.append(f"{marker} ", style="white")
+        label.append(sha, style="cyan")
+        label.append(f" {date}\n", style="white")
+        label.append(f"  {msg}", style="white")
+        if selected:
+            label.stylize("reverse")
+        return label
+
+    async def _load_versions(self) -> None:
+        versions = self.query_one("#version-list", ListView)
+        versions.clear()
+        versions.border_subtitle = "loading..."
+        try:
+            self.commits = await self.github.get_commits(self.owner, self.repo)
+        except Exception as e:
+            versions.clear()
+            versions.border_subtitle = "error"
+            versions.append(ListItem(Static(f"Error: {e}", markup=False)))
+            return
+        versions.clear()
+        versions.border_subtitle = f"{len(self.commits)} commits"
+        self._version_labels = []
+        if not self.commits:
+            versions.append(ListItem(Static("No commits.", markup=False)))
+            return
+        for commit in self.commits:
+            label = Static(self._version_label(commit, selected=False))
+            self._version_labels.append(label)
+            versions.append(ListItem(label))
+        versions.index = 0
+        self._sync_version_selection()
+
+    def _sync_version_selection(self) -> None:
+        versions = self.query_one("#version-list", ListView)
+        index = versions.index
+        for i, label in enumerate(self._version_labels):
+            label.update(self._version_label(self.commits[i], selected=index == i))
+
+    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+        if event.list_view.id == "version-list":
+            self._sync_version_selection()
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        if event.list_view.id != "version-list":
+            return
+        index = event.index
+        if 0 <= index < len(self.commits):
+            commit = self.commits[index]
+            sha = commit.get("sha", "")
+            msg = (
+                commit.get("commit", {}).get("message", "").splitlines()[0]
+                if commit.get("commit")
+                else ""
+            )
+            if sha:
+                self.app.push_screen(
+                    DiffScreen(self.github, self.owner, self.repo, sha, msg)
+                )
+
+    # --- Actions ---------------------------------------------------------
+
+    def _active_panel(self):
+        versions = self.query_one("#version-list", ListView)
+        if versions.has_focus:
+            return versions
+        return self.query_one("#file-tree", AsciiTree)
+
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "tree-filter":
             self._apply_filter()
 
     def action_refresh(self) -> None:
-        self.run_worker(self._load_tree(), exclusive=True)
+        self.run_worker(self._load_tree(), exclusive=True, group="tree")
+        self.run_worker(self._load_versions(), exclusive=True, group="versions")
 
     def action_clone(self) -> None:
         if not self.clone_url:
@@ -224,10 +313,17 @@ class FileTreeScreen(Screen):
         )
 
     def action_cursor_down(self) -> None:
-        self.query_one("#file-tree", AsciiTree).action_cursor_down()
+        self._active_panel().action_cursor_down()
 
     def action_cursor_up(self) -> None:
-        self.query_one("#file-tree", AsciiTree).action_cursor_up()
+        self._active_panel().action_cursor_up()
+
+    def action_toggle_panel(self) -> None:
+        versions = self.query_one("#version-list", ListView)
+        if versions.has_focus:
+            self.query_one("#file-tree", AsciiTree).focus()
+        else:
+            versions.focus()
 
     def action_pop_screen(self) -> None:
         self.app.pop_screen()

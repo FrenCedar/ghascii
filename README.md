@@ -52,7 +52,8 @@ ghascii
 ## Controls
 
 - `↑/↓` or `j/k` - move selection / scroll
-- `Enter` - open selected item
+- `Enter` - open selected item (file, or diff for a version)
+- `Tab` - switch between the files and versions panels (repository screen)
 - `Backspace` or `h` - go back
 - `/` - open the filter panel for the current list
 - `Esc` - return to the list (hides the filter panel when empty)
@@ -65,6 +66,11 @@ ghascii
 Each screen is segmented into a breadcrumb header, a framed content panel
 (with live item counts in the border), an on-demand filter panel, and a
 keybind bar. The focused panel's frame is highlighted in cyan.
+
+The repository screen is split: the left 2/3 shows the file tree, the right
+1/3 lists the repository's versions (recent commits). Press `Tab` to jump to
+the versions panel and `Enter` on a commit to view its full diff against the
+previous version.
 
 ## Updating on Arch
 

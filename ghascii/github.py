@@ -93,6 +93,23 @@ class GitHubClient:
             params=params,
         )
 
+    async def get_commit_diff(self, owner: str, repo: str, sha: str) -> str:
+        """Fetch the unified diff for a single commit (vs its parent)."""
+        req = self.client.build_request(
+            "GET",
+            f"/repos/{owner}/{repo}/commits/{sha}",
+            headers={"Accept": "application/vnd.github.diff"},
+        )
+        url = f"{req.url}#diff"
+        cached = cache.get("GET", url, ttl=86400)
+        if cached is not None:
+            return cached
+        response = await self.client.send(req)
+        response.raise_for_status()
+        text = response.text
+        cache.set("GET", url, text)
+        return text
+
     async def get_latest_commit_sha(self, owner: str, repo: str, branch: str) -> str:
         data = await self.request(
             "GET",

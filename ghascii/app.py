@@ -71,6 +71,25 @@ class GhasciiApp(App):
         padding: 0 1;
     }
 
+    /* --- Repository screen split: 2/3 files, 1/3 versions ---------------- */
+    #tree-split {
+        width: 100%;
+        height: 1fr;
+    }
+    #tree-left {
+        width: 2fr;
+        height: 100%;
+    }
+    #version-list {
+        width: 1fr;
+        height: 100%;
+        padding: 0 1;
+    }
+    #version-list ListItem Static {
+        text-wrap: nowrap;
+        text-overflow: clip;
+    }
+
     ListView > ListItem {
         padding: 0 1;
         background: black;
@@ -91,14 +110,14 @@ class GhasciiApp(App):
         text-style: none;
     }
 
-    #code-view {
+    #code-view, #diff-view {
         width: 100%;
         height: 1fr;
         padding: 0 1;
         scrollbar-size: 0 0;
         background: black;
     }
-    #code-view:focus {
+    #code-view:focus, #diff-view:focus {
         background-tint: black 0%;
     }
 
