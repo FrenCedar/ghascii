@@ -79,7 +79,7 @@ class FileTreeScreen(Screen):
 
     def compose(self) -> None:
         yield Static(
-            breadcrumb("repositories", f"{self.owner}/{self.repo}"),
+            breadcrumb(f"{self.owner}/{self.repo}"),
             classes="bar-top",
         )
         filter_input = Input(

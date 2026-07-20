@@ -38,8 +38,10 @@ class CodeViewScreen(Screen):
         self.ref = ref
 
     def compose(self) -> None:
+        ref_label = f"@{self.ref[:12]}" if self.ref != "HEAD" else ""
+        header_path = f"{self.path}{ref_label}"
         yield Static(
-            breadcrumb("repositories", f"{self.owner}/{self.repo}", self.path),
+            breadcrumb(f"{self.owner}/{self.repo}", header_path),
             classes="bar-top",
         )
         log = RichLog(id="code-view", wrap=False, highlight=True, classes="panel")
