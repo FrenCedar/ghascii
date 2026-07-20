@@ -278,14 +278,12 @@ class FileTreeScreen(Screen):
         if 0 <= index < len(self.commits):
             commit = self.commits[index]
             sha = commit.get("sha", "")
-            msg = (
-                commit.get("commit", {}).get("message", "").splitlines()[0]
-                if commit.get("commit")
-                else ""
-            )
+            commit_data = commit.get("commit", {})
+            author = commit_data.get("author", {}).get("name", "")
+            date = commit_data.get("committer", {}).get("date", "")[:10]
             if sha:
                 self.app.push_screen(
-                    DiffScreen(self.github, self.owner, self.repo, sha, msg)
+                    DiffScreen(self.github, self.owner, self.repo, sha, author, date)
                 )
 
     # --- Actions ---------------------------------------------------------

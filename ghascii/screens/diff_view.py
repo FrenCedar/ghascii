@@ -25,24 +25,25 @@ class DiffScreen(Screen):
         owner: str,
         repo: str,
         sha: str,
-        message: str = "",
+        author: str = "",
+        date: str = "",
     ) -> None:
         super().__init__()
         self.github = github
         self.owner = owner
         self.repo = repo
         self.sha = sha
-        self.message = message
+        self.author = author
+        self.date = date
 
     def compose(self) -> None:
+        header = f"{self.author} | {self.date}" if self.author or self.date else ""
         yield Static(
-            breadcrumb(f"{self.owner}/{self.repo}", f"diff@{self.sha[:7]}"),
+            breadcrumb(f"{self.owner}/{self.repo}", header),
             classes="bar-top",
         )
         log = RichLog(id="diff-view", wrap=False, highlight=False, classes="panel")
-        log.border_title = f"Changes in {self.sha[:7]}"
-        if self.message:
-            log.border_subtitle = self.message[:50]
+        log.border_title = f"diff@{self.sha[:7]}"
         yield log
         yield Static(
             keybar(
