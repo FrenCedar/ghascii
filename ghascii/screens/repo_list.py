@@ -21,7 +21,6 @@ class RepoListScreen(Screen):
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
         ("/", "focus_filter", "Filter"),
-        ("escape", "focus_list", "List"),
         ("u", "update", "Update"),
     ]
 
@@ -166,6 +165,9 @@ class RepoListScreen(Screen):
         if not filter_input.value:
             filter_input.add_class("hidden")
         self.query_one("#repo-list", ListView).focus()
+
+    def action_menu(self) -> None:
+        self.app.action_menu()
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         index = event.index

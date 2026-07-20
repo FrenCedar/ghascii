@@ -62,7 +62,6 @@ class FileTreeScreen(Screen):
         ("k", "cursor_up", "Up"),
         ("tab", "toggle_panel", "Switch panel"),
         ("/", "focus_filter", "Filter"),
-        ("escape", "focus_tree", "Tree"),
     ]
 
     def __init__(

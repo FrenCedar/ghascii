@@ -19,7 +19,6 @@ class RevisionsScreen(Screen):
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
         ("/", "focus_filter", "Filter"),
-        ("escape", "focus_list", "List"),
     ]
 
     def __init__(

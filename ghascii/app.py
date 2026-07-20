@@ -6,6 +6,7 @@ from ghascii.auth import load_token
 from ghascii.github import GitHubClient
 from ghascii.screens.help import HelpScreen
 from ghascii.screens.login import LoginScreen
+from ghascii.screens.menu import MenuScreen
 from ghascii.screens.repo_list import RepoListScreen
 
 
@@ -121,9 +122,20 @@ class GhasciiApp(App):
         background-tint: black 0%;
     }
 
-    /* --- Modal screens (login, help, error, clone) ----------------------- */
-    #login-screen, #clone-screen, #help-screen, #error-screen {
+    /* --- Modal screens (login, help, error, clone, menu) ----------------- */
+    #login-screen, #clone-screen, #help-screen, #error-screen, #menu-screen {
         align: center middle;
+    }
+
+    #menu-box {
+        width: 40;
+        height: auto;
+        align: center middle;
+    }
+    #menu-title {
+        text-align: center;
+        text-style: bold;
+        padding: 1 0;
     }
 
     .modal-box {
@@ -167,6 +179,7 @@ class GhasciiApp(App):
     """
 
     BINDINGS = [
+        ("escape", "menu", "Menu"),
         ("q", "quit", "Quit"),
         ("?", "help", "Help"),
     ]
@@ -189,6 +202,9 @@ class GhasciiApp(App):
 
     def action_help(self) -> None:
         self.push_screen(HelpScreen())
+
+    def action_menu(self) -> None:
+        self.push_screen(MenuScreen())
 
     def action_quit(self) -> None:
         if self.github:
