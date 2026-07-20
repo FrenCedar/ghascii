@@ -1,5 +1,7 @@
 """Repository file-tree browser screen."""
 
+from typing import Any
+
 from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Input, ListItem, ListView, Static
@@ -53,10 +55,6 @@ class FileTreeScreen(Screen):
     def on_mount(self) -> None:
         self.run_worker(self._load_tree(), exclusive=True)
 
-    def _entry_text(self, kind: str, path: str) -> str:
-        prefix = "[D]" if kind == "dir" else "[F]"
-        return f"{prefix} {path}"
-
     async def _load_tree(self) -> None:
         list_view = self.query_one("#file-tree", ListView)
         filter_input = self.query_one("#tree-filter", Input)
@@ -80,14 +78,42 @@ class FileTreeScreen(Screen):
         finally:
             filter_input.disabled = False
 
-    def _build_entries(self, tree: list[dict]) -> list[tuple[str, str, dict]]:
+    def _build_entries(
+        self, tree: list[dict]
+    ) -> list[tuple[str, str, dict]]:
+        """Build a nested, indented ASCII tree from a flat GitHub tree."""
         files = [e for e in tree if e.get("type") == "blob"]
-        dirs = {e["path"].rsplit("/", 1)[0] for e in files if "/" in e["path"]}
+        root: dict[str, Any] = {"dirs": {}, "files": {}}
+
+        for file_entry in files:
+            path = file_entry.get("path", "")
+            if not path:
+                continue
+            parts = path.split("/")
+            node = root
+            for i, part in enumerate(parts[:-1]):
+                if part not in node["dirs"]:
+                    node["dirs"][part] = {
+                        "dirs": {},
+                        "files": {},
+                        "path": "/".join(parts[: i + 1]),
+                    }
+                node = node["dirs"][part]
+            node["files"][parts[-1]] = file_entry
+
         entries: list[tuple[str, str, dict]] = []
-        for d in sorted(dirs):
-            entries.append(("dir", d, {"path": d}))
-        for f in sorted(files, key=lambda x: x.get("path", "")):
-            entries.append(("file", f.get("path", ""), f))
+
+        def walk(node: dict[str, Any], depth: int) -> None:
+            indent = "    " * depth
+            for name in sorted(node["dirs"]):
+                sub = node["dirs"][name]
+                entries.append(("dir", f"{indent}[D] {name}", {"path": sub["path"]}))
+                walk(sub, depth + 1)
+            for name in sorted(node["files"]):
+                file_entry = node["files"][name]
+                entries.append(("file", f"{indent}[F] {name}", file_entry))
+
+        walk(root, 0)
         return entries
 
     def _apply_filter(self) -> None:
@@ -101,8 +127,8 @@ class FileTreeScreen(Screen):
         if not self.filtered_entries:
             list_view.append(ListItem(Static("No matching files.", markup=False)))
             return
-        for kind, path, _entry in self.filtered_entries:
-            list_view.append(ListItem(Static(self._entry_text(kind, path), markup=False)))
+        for _kind, display, _entry in self.filtered_entries:
+            list_view.append(ListItem(Static(display, markup=False)))
 
     def on_input_changed(self, event: Input.Changed) -> None:
         if event.input.id == "tree-filter":
@@ -131,8 +157,10 @@ class FileTreeScreen(Screen):
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         index = event.index
         if 0 <= index < len(self.filtered_entries):
-            kind, path, _entry = self.filtered_entries[index]
+            kind, _display, entry = self.filtered_entries[index]
             if kind == "file":
-                self.app.push_screen(
-                    CodeViewScreen(self.github, self.owner, self.repo, path)
-                )
+                path = entry.get("path", "")
+                if path:
+                    self.app.push_screen(
+                        CodeViewScreen(self.github, self.owner, self.repo, path)
+                    )
