@@ -224,15 +224,12 @@ class FileTreeScreen(Screen):
     # --- Version panel (right, 1/3) -------------------------------------
 
     def _version_label(self, commit: dict, selected: bool) -> Text:
-        sha = commit.get("sha", "")[:7]
+        author = commit.get("commit", {}).get("author", {}).get("name", "")
         date = commit.get("commit", {}).get("committer", {}).get("date", "")[:10]
-        msg = commit.get("commit", {}).get("message", "").splitlines()[0]
         marker = ">" if selected else " "
         label = Text(no_wrap=True, overflow="crop")
         label.append(f"{marker} ", style="white")
-        label.append(sha, style="cyan")
-        label.append(f" {date}\n", style="white")
-        label.append(f"  {msg}", style="white")
+        label.append(f"{author} | {date}", style="white")
         if selected:
             label.stylize("reverse")
         return label
