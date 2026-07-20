@@ -41,7 +41,7 @@ class AsciiTree(Tree):
             if node == self.cursor_node
             else ("  ", base_style)
         )
-        text = Text.assemble(prefix, indicator, node_label)
+        text = Text.assemble(indicator, prefix, node_label)
         return text
 
 
@@ -176,6 +176,7 @@ class FileTreeScreen(Screen):
                 node.add(
                     name,
                     data={"kind": "file", "entry": file_entry, "path": full_path},
+                    allow_expand=False,
                 )
                 has_match = True
         return has_match
