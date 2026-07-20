@@ -52,8 +52,8 @@ class GhasciiApp(App):
         height: auto;
         padding: 0 2;
         text-style: bold;
-        background: cyan;
-        color: black;
+        background: ansi_bright_black;
+        color: white;
     }
 
     #repo-footer, #tree-footer, #code-footer, #clone-footer {
@@ -80,7 +80,7 @@ class GhasciiApp(App):
         width: 100%;
         height: 1fr;
         padding: 0 1;
-        background: black;
+        background: ansi_bright_black;
     }
 
     ListView > ListItem {
@@ -95,7 +95,7 @@ class GhasciiApp(App):
     }
 
     #file-tree {
-        background: black;
+        background: ansi_bright_black;
         color: white;
     }
     #file-tree > .tree--cursor {

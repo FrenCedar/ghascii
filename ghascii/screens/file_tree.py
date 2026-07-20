@@ -35,6 +35,7 @@ class FileTreeScreen(Screen):
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
         ("/", "focus_filter", "Filter"),
+        ("escape", "focus_tree", "Tree"),
     ]
 
     def __init__(
@@ -52,9 +53,11 @@ class FileTreeScreen(Screen):
         self._tree_data: dict[str, Any] = {}
 
     def compose(self) -> None:
-        yield Static(f"{self.owner}/{self.repo}", id="tree-title")
+        yield Static(
+            f"[cyan]ghascii[/cyan]  |  {self.owner}/{self.repo}", id="tree-title"
+        )
         yield Input(
-            placeholder="Filter files...",
+            placeholder="Filter files... (Esc to return)",
             id="tree-filter",
             disabled=True,
         )
@@ -86,6 +89,7 @@ class FileTreeScreen(Screen):
             tree_list = await self.github.get_tree(self.owner, self.repo, tree_sha)
             self._tree_data = self._build_tree_data(tree_list)
             self._apply_filter()
+            self.query_one("#file-tree", AsciiTree).focus()
         except Exception as e:
             tree.clear()
             tree.root.add(f"Error: {e}")
@@ -181,6 +185,9 @@ class FileTreeScreen(Screen):
 
     def action_focus_filter(self) -> None:
         self.query_one("#tree-filter", Input).focus()
+
+    def action_focus_tree(self) -> None:
+        self.query_one("#file-tree", AsciiTree).focus()
 
     def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
         data = event.node.data or {}

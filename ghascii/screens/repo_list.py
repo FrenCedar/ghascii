@@ -27,7 +27,7 @@ class RepoListScreen(Screen):
         self.filtered_repos: list[dict] = []
 
     def compose(self) -> None:
-        yield Static("Your repositories", id="repo-title")
+        yield Static("[cyan]ghascii[/cyan]  |  Your repositories", id="repo-title")
         yield Input(
             placeholder="Filter repositories... (Esc to return)",
             id="repo-filter",

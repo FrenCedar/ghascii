@@ -28,7 +28,10 @@ class CodeViewScreen(Screen):
         self.path = path
 
     def compose(self) -> None:
-        yield Static(f"{self.owner}/{self.repo}: {self.path}", id="code-title")
+        yield Static(
+            f"[cyan]ghascii[/cyan]  |  {self.owner}/{self.repo}: {self.path}",
+            id="code-title",
+        )
         yield RichLog(id="code-view", wrap=False, highlight=True)
         yield Static("q: quit | backspace: back", id="code-footer")
 
