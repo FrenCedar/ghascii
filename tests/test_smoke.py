@@ -5,7 +5,7 @@ from contextlib import ExitStack
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from textual.widgets import Input, ListView, Static
+from textual.widgets import Input, ListView, Static, Tree
 
 from ghascii.app import GhasciiApp
 from ghascii.github import GitHubClient
@@ -51,10 +51,14 @@ async def test_navigate_to_code_view() -> None:
         )
 
     def tree_contains_text(text: str) -> bool:
-        return any(
-            text in str(static.render())
-            for static in app.screen.query("#file-tree ListItem Static")
-        )
+        tree = app.screen.query_one("#file-tree", Tree)
+
+        def _walk(node):
+            yield node
+            for child in node.children:
+                yield from _walk(child)
+
+        return any(text in str(node.label) for node in _walk(tree.root))
 
     patches = {
         "verify_token": AsyncMock(return_value={"login": "testuser"}),
@@ -83,7 +87,7 @@ async def test_navigate_to_code_view() -> None:
                 await wait_for(lambda: isinstance(app.screen, FileTreeScreen))
 
                 await wait_for(lambda: tree_contains_text("README.md"))
-                app.screen.query_one("#file-tree", ListView).focus()
+                app.screen.query_one("#file-tree", Tree).focus()
                 await pilot.pause()
                 await pilot.press("down", "enter")
                 await wait_for(lambda: isinstance(app.screen, CodeViewScreen))
