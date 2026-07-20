@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ghascii"
+version = "0.1.0"
+description = "ASCII-only GitHub TUI for headless Linux consoles"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "ghascii user"}]
+dependencies = [
+    "textual>=0.72.0",
+    "rich>=13.0",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "respx"]
+
+[project.scripts]
+ghascii = "ghascii.__main__:main"
