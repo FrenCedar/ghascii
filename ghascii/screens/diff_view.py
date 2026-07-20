@@ -43,7 +43,7 @@ class DiffScreen(Screen):
             classes="bar-top",
         )
         log = RichLog(id="diff-view", wrap=False, highlight=False, classes="panel")
-        log.border_title = f"diff@{self.sha[:7]}"
+        log.border_title = "diff"
         yield log
         yield Static(
             keybar(
