@@ -55,6 +55,26 @@ ghascii
 - `?` - help
 - `q` - quit
 
+## Updating on Arch
+
+If you keep the project in a git repo, run this on the laptop after each push:
+
+```bash
+cd ~/ghascii
+git pull
+source .venv/bin/activate
+pip install -e .
+```
+
+If you only want the latest code without a git repo, copy the project folder
+(excluding `.venv`) with a USB drive or `scp -r`, then reinstall:
+
+```bash
+cd ghascii
+source .venv/bin/activate
+pip install -e .
+```
+
 ## Tests
 
 ```bash
