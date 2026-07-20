@@ -88,7 +88,7 @@ class GhasciiApp(App):
         background: black;
         color: white;
     }
-    ListView > ListItem.--highlight {
+    ListView > ListItem.-highlight {
         background: white;
         color: black;
         text-style: bold;
@@ -98,7 +98,7 @@ class GhasciiApp(App):
         background: black;
         color: white;
     }
-    #file-tree .tree--cursor {
+    #file-tree > .tree--cursor {
         background: white;
         color: black;
         text-style: bold;
