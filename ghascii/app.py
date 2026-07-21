@@ -140,9 +140,8 @@ class GhasciiApp(App):
         padding: 1 0;
     }
     #menu-list {
-        width: auto;
+        width: 100%;
         height: auto;
-        align: center middle;
     }
     #menu-list ListItem {
         text-align: center;
