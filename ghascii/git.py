@@ -44,20 +44,8 @@ def _git_remote_url(path: Path) -> str | None:
     return result.stdout.strip() if result.returncode == 0 else None
 
 
-def _writable_copy(root: Path) -> Path:
-    """Return a user-writable path containing the ghascii source.
-
-    If the supplied root and its git objects directory are writable, use it;
-    otherwise clone into the user cache directory so updates do not fail on
-    permission errors.
-    """
-    git_objects = root / ".git" / "objects"
-    if (
-        (root / ".git").is_dir()
-        and git_objects.is_dir()
-        and os.access(git_objects, os.W_OK)
-    ):
-        return root
+def _fallback_copy(root: Path) -> Path:
+    """Clone ghascii into a user-owned cache directory for updates."""
     cache = Path.home() / ".cache" / "ghascii" / "self-update"
     target = cache / "ghascii"
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -72,6 +60,21 @@ def _writable_copy(root: Path) -> Path:
         if result.returncode != 0:
             raise GitError(result.stderr.strip() or "git clone failed")
     return target
+
+
+def _git_pull_error(stderr: str) -> bool:
+    """Return True if stderr indicates a permission/ownership git error."""
+    lowered = stderr.lower()
+    return any(
+        phrase in lowered
+        for phrase in (
+            "permission",
+            "adding an object",
+            "detected dubious",
+            "safe.directory",
+            "not a git repository",
+        )
+    )
 
 
 def _pip_install(workdir: Path) -> subprocess.CompletedProcess[str]:
@@ -97,13 +100,21 @@ def _pip_install(workdir: Path) -> subprocess.CompletedProcess[str]:
 
 def update_ghascii(root: Path) -> str:
     """Pull the latest ghascii source and reinstall it in the current environment."""
-    workdir = _writable_copy(root)
+    workdir = root
     pull = subprocess.run(
         ["git", "-C", str(workdir), "pull", "--ff-only"],
         capture_output=True,
         text=True,
         check=False,
     )
+    if pull.returncode != 0 and _git_pull_error(pull.stderr):
+        workdir = _fallback_copy(root)
+        pull = subprocess.run(
+            ["git", "-C", str(workdir), "pull", "--ff-only"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
     if pull.returncode != 0:
         raise GitError(pull.stderr.strip() or "git pull failed")
     install = _pip_install(workdir)
