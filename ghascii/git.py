@@ -47,10 +47,16 @@ def _git_remote_url(path: Path) -> str | None:
 def _writable_copy(root: Path) -> Path:
     """Return a user-writable path containing the ghascii source.
 
-    If the supplied root is writable, use it; otherwise clone into the
-    user cache directory so updates do not fail on permission errors.
+    If the supplied root and its git objects directory are writable, use it;
+    otherwise clone into the user cache directory so updates do not fail on
+    permission errors.
     """
-    if (root / ".git").is_dir() and os.access(root, os.W_OK):
+    git_objects = root / ".git" / "objects"
+    if (
+        (root / ".git").is_dir()
+        and git_objects.is_dir()
+        and os.access(git_objects, os.W_OK)
+    ):
         return root
     cache = Path.home() / ".cache" / "ghascii" / "self-update"
     target = cache / "ghascii"
@@ -68,6 +74,27 @@ def _writable_copy(root: Path) -> Path:
     return target
 
 
+def _pip_install(workdir: Path) -> subprocess.CompletedProcess[str]:
+    """Install the package in editable mode, falling back to --user on permission errors."""
+    base_cmd = [sys.executable, "-m", "pip", "install", "-e", "."]
+    install = subprocess.run(
+        base_cmd,
+        cwd=str(workdir),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if install.returncode != 0 and "Permission" in install.stderr:
+        install = subprocess.run(
+            [*base_cmd, "--user"],
+            cwd=str(workdir),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    return install
+
+
 def update_ghascii(root: Path) -> str:
     """Pull the latest ghascii source and reinstall it in the current environment."""
     workdir = _writable_copy(root)
@@ -79,13 +106,7 @@ def update_ghascii(root: Path) -> str:
     )
     if pull.returncode != 0:
         raise GitError(pull.stderr.strip() or "git pull failed")
-    install = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-e", "."],
-        cwd=str(workdir),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    install = _pip_install(workdir)
     if install.returncode != 0:
         raise GitError(install.stderr.strip() or "pip install failed")
     stdout = (pull.stdout.strip() + "\n" + install.stdout.strip()).strip()
