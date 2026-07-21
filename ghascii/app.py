@@ -123,7 +123,7 @@ class GhasciiApp(App):
     }
 
     /* --- Modal screens (login, help, error, clone, menu) ----------------- */
-    #login-screen, #clone-screen, #help-screen, #error-screen, #menu-screen {
+    #login-screen, #clone-screen, #help-screen, #error-screen, #menu-screen, #settings-screen {
         align: center middle;
     }
 
@@ -146,6 +146,18 @@ class GhasciiApp(App):
     }
     #menu-list ListItem {
         text-align: center;
+    }
+
+    #settings-box {
+        width: 50;
+        height: auto;
+        align: center middle;
+        padding: 1 2;
+    }
+    #settings-title {
+        text-align: center;
+        text-style: bold;
+        padding: 1 0;
     }
 
     .modal-box {

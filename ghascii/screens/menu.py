@@ -4,6 +4,8 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import ListItem, ListView, Static
 
+from ghascii.screens.settings import SettingsScreen
+
 
 class MenuScreen(Screen):
     """Options menu reachable from any screen via Escape."""
@@ -18,6 +20,7 @@ class MenuScreen(Screen):
             Static("ghascii", id="menu-title"),
             ListView(
                 ListItem(Static("Resume")),
+                ListItem(Static("Settings")),
                 ListItem(Static("Quit")),
                 id="menu-list",
             ),
@@ -30,6 +33,8 @@ class MenuScreen(Screen):
         if index == 0:
             self.action_resume()
         elif index == 1:
+            self.app.push_screen(SettingsScreen())
+        elif index == 2:
             self.action_quit()
 
     def on_mount(self) -> None:
